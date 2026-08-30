@@ -34,12 +34,9 @@ services:
       - key: LOG_LEVEL
         value: WARNING
 
-      - key: PYTHON_VERSION
-        value: "3.11.0"
 
-      # ⚠️  Set these in the Render dashboard (not here — keeps IDs private)
       - key: OWM_API_KEY
-        sync: false              # Must be set manually in Render dashboard
+        value: "5f84004690244978a3651a57c90e14f7"  # Replace in Render dashboard if needed
 
       - key: TOMATO_MODEL_ID
         value: "1Cq3APxHdK3H-o_FZCpv71OWB87awuS7A"
