@@ -15,22 +15,13 @@ services:
     plan: free
 
     # --- Build ---
-    buildCommand: |
-      pip install -r requirements.txt &&
-      python scripts/download_models.py
+    buildCommand: "pip install -r requirements.txt && python scripts/download_models.py"
 
     # --- Start ---
-    # --preload: loads Flask + TF models once before accepting requests
-    # --workers 1: free tier has 512MB RAM; 1 worker keeps memory safe
-    # --timeout 120: allow up to 2 min for first inference (TF cold load)
-    startCommand: >
-      gunicorn wsgi:app
-      --bind 0.0.0.0:$PORT
-      --workers 1
-      --timeout 120
-      --preload
-      --access-logfile -
-      --error-logfile -
+    # --preload: loads TF models once before accepting requests
+    # --workers 1: free tier 512MB RAM limit
+    # --timeout 120: allow time for first TF inference
+    startCommand: "gunicorn wsgi:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120 --preload --access-logfile - --error-logfile -"
 
     # --- Environment Variables ---
     envVars:
