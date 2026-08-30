@@ -17,12 +17,13 @@ venv/
 env/
 ENV/
 
-# ML Model binaries (large files — store in model registry or LFS)
-models/*.h5
-models/*.keras
+# ML Model binaries (except bundled core models)
 models/*.pkl
-*.h5
+models/*.keras
 *.keras
+*.pkl
+!models/tomato_multiclass_model.h5
+!models/banana_multiclass_model.h5
 
 # Uploaded images (runtime artefacts)
 static/uploads/

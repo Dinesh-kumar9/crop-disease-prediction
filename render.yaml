@@ -15,7 +15,7 @@ services:
     plan: free
 
     # --- Build ---
-    buildCommand: "pip install -r requirements.txt && python scripts/download_models.py"
+    buildCommand: "pip install -r requirements.txt"
 
     # --- Start ---
     # --preload: loads TF models once before accepting requests
@@ -34,15 +34,8 @@ services:
       - key: LOG_LEVEL
         value: WARNING
 
-
       - key: OWM_API_KEY
-        value: "5f84004690244978a3651a57c90e14f7"  # Replace in Render dashboard if needed
-
-      - key: TOMATO_MODEL_ID
-        value: "1Cq3APxHdK3H-o_FZCpv71OWB87awuS7A"
-
-      - key: BANANA_MODEL_ID
-        value: "1WcnYiuTRbT4OV-N4mWcktqafDZWVM2Ao"
+        value: "5f84004690244978a3651a57c90e14f7"
 
     # --- Health Check ---
     healthCheckPath: /
