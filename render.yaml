@@ -34,6 +34,12 @@ services:
       - key: LOG_LEVEL
         value: WARNING
 
+      - key: CUDA_VISIBLE_DEVICES
+        value: "-1"
+
+      - key: TF_CPP_MIN_LOG_LEVEL
+        value: "3"
+
       - key: OWM_API_KEY
         value: "5f84004690244978a3651a57c90e14f7"
 

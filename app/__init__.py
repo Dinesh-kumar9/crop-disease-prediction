@@ -55,8 +55,9 @@ def _load_models(app: Flask) -> None:
     This avoids reloading on every request.
     """
     import os
-    os.environ.setdefault("TF_CPP_MIN_LOG_LEVEL", "2")
-    os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")
+    os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+    os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 
     import tensorflow as tf
 
