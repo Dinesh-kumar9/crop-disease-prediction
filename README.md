@@ -55,182 +55,52 @@ Farmers across India face critical challenges: **late disease detection**, **wea
 ## 🏗️ System Architecture
 
 ```mermaid
-graph TB
-    subgraph CLIENT["🖥️  Client Layer"]
-        UI["Farmer Browser\nindex.html"]
-    end
-
-    subgraph FLASK["⚙️  Flask Application — app/"]
-        direction TB
-        FACTORY["create_app()\nApp Factory\napp/__init__.py"]
-        ROUTE["Route Handler\napp/routes/main.py\nPOST /"]
-        PIPELINE["Analysis Pipeline\napp/services/pipeline.py\nrun_analysis()"]
-        PREDICT["Prediction Service\napp/services/prediction.py\nModelRegistry"]
-        IMGUTIL["Image Utils\napp/utils/image.py\npreprocess + save"]
-    end
-
-    subgraph MODELS["🤖  ML Models — models/"]
-        TOM["tomato_multiclass_model.h5\nMobileNetV2 · 8 classes"]
-        BAN["banana_multiclass_model.h5\nMobileNetV2 · 4 classes"]
-    end
-
-    subgraph MODULES["📦  Domain Modules — modules/"]
-        WX["weather.py\nOpenWeatherMap API\n5-day forecast"]
-        SCHED["scheduler.py\nSmart farming\nschedule engine"]
-        GS["growth_stage.py\nGrowth stage\ndetection"]
-        TRANS["translator.py\nMultilingual\n9 Indian languages"]
-        ECON["economics.py\nYield & revenue\nimpact analysis"]
-        ADV["advisor.py\nDisease treatment\nrecommendations"]
-    end
-
-    subgraph EXTERNAL["🌐  External Services"]
-        OWM["OpenWeatherMap\nREST API"]
-        GTRANS["Google Translate\nAPI fallback"]
-    end
-
-    subgraph CONFIG["🔧  Config & Infrastructure"]
-        CFG["config.py\nDev / Prod / Test"]
-        ENV[".env\nSecrets & API keys"]
-        LOG["logs/\nRotating file logs"]
-    end
-
-    subgraph OUTPUT["📊  Output Layer"]
-        DASH["dashboard.html\nFull analysis view"]
-    end
-
-    UI -->|"POST crop + city + image"| ROUTE
-    ROUTE --> IMGUTIL
-    IMGUTIL -->|"preprocessed array"| PIPELINE
-    PIPELINE --> PREDICT
-    PREDICT -->|"inference"| TOM
-    PREDICT -->|"inference"| BAN
-    PIPELINE --> GS
-    PIPELINE --> WX
-    PIPELINE --> SCHED
-    PIPELINE --> ECON
-    PIPELINE --> ADV
-    PIPELINE --> TRANS
-    WX <-->|"HTTP GET"| OWM
-    TRANS <-->|"HTTP"| GTRANS
-    FACTORY --> CFG
-    CFG --> ENV
-    FLASK --> LOG
-    PIPELINE -->|"result dict"| ROUTE
-    ROUTE -->|"render_template"| DASH
-    DASH --> UI
-
-    style CLIENT fill:#e8f5e9,stroke:#388e3c,color:#1b5e20
-    style FLASK fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
-    style MODELS fill:#fff3e0,stroke:#e65100,color:#bf360c
-    style MODULES fill:#f3e5f5,stroke:#6a1b9a,color:#4a148c
-    style EXTERNAL fill:#fce4ec,stroke:#880e4f,color:#880e4f
-    style CONFIG fill:#e8eaf6,stroke:#283593,color:#283593
-    style OUTPUT fill:#e0f2f1,stroke:#00695c,color:#004d40
+flowchart TD
+    A["👨‍🌾 Farmer"] -->|"Opens browser"| B["🌐 Web Browser\nindex.html"]
+    B -->|"Uploads leaf image + crop + city"| C["⚙️ Flask Web App"]
+    C -->|"Reads image"| D["🤖 AI Disease Model\nMobileNetV2"]
+    C -->|"Fetches weather"| E["☁️ Weather API\nOpenWeatherMap"]
+    D -->|"Disease + Confidence"| F["📊 Analysis Engine"]
+    E -->|"5-day forecast"| F
+    F -->|"Runs 6 modules"| G["📦 Modules\nAdvisor · Scheduler · Economics · Translator"]
+    G -->|"Full report"| H["📱 Dashboard\nDisease · Weather · Schedule · Economics"]
+    H -->|"Shows results"| A
 ```
 
 ---
 
-## 🔄 Request Flow
+
+## 🔄 How It Works — Step by Step
 
 ```mermaid
-sequenceDiagram
-    actor Farmer
-    participant Browser
-    participant Route as Route Handler<br/>(routes/main.py)
-    participant Pipeline as Analysis Pipeline<br/>(services/pipeline.py)
-    participant Model as ML Model<br/>(services/prediction.py)
-    participant Modules as Domain Modules
-    participant OWM as OpenWeatherMap API
-
-    Farmer->>Browser: Upload leaf image + select crop + city
-    Browser->>Route: POST / (multipart form)
-
-    Route->>Route: Validate file type & size
-    Route->>Route: Save with UUID filename → static/uploads/
-
-    Route->>Pipeline: run_analysis(crop, filepath, city)
-
-    Pipeline->>Pipeline: preprocess_image() → (1,224,224,3) array
-
-    Pipeline->>Model: predict_disease(crop, img_array)
-    Model-->>Pipeline: (disease_label, confidence%)
-
-    Pipeline->>Modules: predict_growth_stage(img_array)
-    Modules-->>Pipeline: (stage, stage_confidence%)
-
-    Pipeline->>OWM: GET /forecast?q={city}
-    OWM-->>Pipeline: 5-day weather JSON
-    Pipeline->>Modules: analyze_weather_risks(forecast)
-    Modules-->>Pipeline: [risk_alerts]
-
-    Pipeline->>Modules: get_farming_schedule(stage, disease, forecast)
-    Modules-->>Pipeline: [schedule_tasks]
-
-    Pipeline->>Modules: get_market_data(crop, city)
-    Pipeline->>Modules: calculate_economics(crop, disease, market_data)
-    Modules-->>Pipeline: {economic_analysis}
-
-    Pipeline->>Modules: detect_language_from_city(city)
-    Modules-->>Pipeline: lang_code (e.g. "te")
-
-    Pipeline->>Modules: get_recommendations(disease, lang)
-    Modules-->>Pipeline: {treatment_recommendations}
-
-    Pipeline->>Modules: translate_schedule(schedule, lang)
-    Modules-->>Pipeline: [translated_schedule]
-
-    Pipeline-->>Route: result_dict (all analysis data)
-    Route->>Browser: render_template("dashboard.html", **result)
-    Browser-->>Farmer: Full analytics dashboard
+flowchart TD
+    S1["📸 Step 1\nFarmer uploads a leaf photo"] --> S2
+    S2["✅ Step 2\nApp validates the image file"] --> S3
+    S3["🤖 Step 3\nAI model detects the disease"] --> S4
+    S4["🌿 Step 4\nDetects crop growth stage"] --> S5
+    S5["☁️ Step 5\nFetches 5-day weather forecast"] --> S6
+    S6["📅 Step 6\nGenerates smart farming schedule"] --> S7
+    S7["💰 Step 7\nCalculates crop revenue impact"] --> S8
+    S8["🌐 Step 8\nDetects farmer's local language"] --> S9
+    S9["💊 Step 9\nPrepares treatment advice in local language"] --> S10
+    S10["📊 Step 10\nShows full dashboard to farmer"]
 ```
 
 ---
 
-## 📦 Module Architecture
+## 📦 What Each Module Does
 
 ```mermaid
-graph LR
-    subgraph CORE["Core Application"]
-        A["app/__init__.py\nFlask Factory"]
-        B["app/routes/main.py\nHTTP Handler"]
-        C["app/services/pipeline.py\nOrchestrator"]
-        D["app/services/prediction.py\nML Inference"]
-        E["app/utils/image.py\nImage Helpers"]
-    end
-
-    subgraph DOM["Domain Modules"]
-        W["weather.py"]
-        S["scheduler.py"]
-        G["growth_stage.py"]
-        T["translator.py"]
-        EC["economics.py"]
-        AD["advisor.py"]
-    end
-
-    subgraph INF["Infrastructure"]
-        CFG["config.py"]
-        LOG["Logging"]
-        ENV[".env"]
-    end
-
-    A -->|"registers"| B
-    A -->|"loads models"| D
-    A -->|"reads"| CFG
-    CFG -->|"reads"| ENV
-    B -->|"calls"| C
-    B -->|"uses"| E
-    C -->|"calls"| D
-    C -->|"calls"| W
-    C -->|"calls"| S
-    C -->|"calls"| G
-    C -->|"calls"| T
-    C -->|"calls"| EC
-    C -->|"calls"| AD
-    A -->|"writes"| LOG
-
-    style CORE fill:#e3f2fd,stroke:#1565c0
-    style DOM fill:#f3e5f5,stroke:#6a1b9a
-    style INF fill:#e8eaf6,stroke:#283593
+flowchart LR
+    IMG["📸 Leaf Image"] --> MODEL
+    MODEL["🤖 AI Model\nDisease Detection"] --> PIPE
+    PIPE["⚙️ Pipeline\nOrchestrates Everything"]
+    PIPE --> W["☁️ weather.py\n5-day forecast"]
+    PIPE --> S["📅 scheduler.py\nFarming tasks"]
+    PIPE --> E["💰 economics.py\nRevenue impact"]
+    PIPE --> A["💊 advisor.py\nTreatment tips"]
+    PIPE --> T["🌐 translator.py\nLocal language"]
+    W & S & E & A & T --> DASH["📊 Dashboard"]
 ```
 
 ---
