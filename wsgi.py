@@ -2,13 +2,15 @@
 wsgi.py
 Production WSGI entry point.
 
-Usage with waitress (Windows):
-    waitress-serve --host=0.0.0.0 --port=5000 wsgi:app
+Usage with gunicorn (Render / Linux):
+    gunicorn wsgi:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120 --preload
 
-Usage with gunicorn (Linux/Mac):
-    gunicorn wsgi:app --bind 0.0.0.0:5000 --workers 2
+Usage with waitress (Windows local fallback):
+    python run.py
 """
 
+import os
 from app import create_app
 
-app = create_app("production")
+app = create_app(os.getenv("FLASK_ENV", "production"))
+

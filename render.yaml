@@ -1,0 +1,60 @@
+# render.yaml — Render Blueprint (Infrastructure as Code)
+# Docs: https://render.com/docs/infrastructure-as-code
+#
+# Deploy with:
+#   1. Push this file to your GitHub repo (root level)
+#   2. Render Dashboard → New → Blueprint
+#   3. Select your repo — Render auto-reads this file
+#   4. Set secret env vars in Render dashboard
+
+services:
+  - type: web
+    name: crop-disease-identification
+    runtime: python
+    region: singapore          # Closest to India
+    plan: free
+
+    # --- Build ---
+    buildCommand: |
+      pip install -r requirements.txt &&
+      python scripts/download_models.py
+
+    # --- Start ---
+    # --preload: loads Flask + TF models once before accepting requests
+    # --workers 1: free tier has 512MB RAM; 1 worker keeps memory safe
+    # --timeout 120: allow up to 2 min for first inference (TF cold load)
+    startCommand: >
+      gunicorn wsgi:app
+      --bind 0.0.0.0:$PORT
+      --workers 1
+      --timeout 120
+      --preload
+      --access-logfile -
+      --error-logfile -
+
+    # --- Environment Variables ---
+    envVars:
+      - key: FLASK_ENV
+        value: production
+
+      - key: SECRET_KEY
+        generateValue: true      # Render auto-generates a secure random key
+
+      - key: LOG_LEVEL
+        value: WARNING
+
+      - key: PYTHON_VERSION
+        value: "3.11.0"
+
+      # ⚠️  Set these in the Render dashboard (not here — keeps IDs private)
+      - key: OWM_API_KEY
+        sync: false              # Must be set manually in Render dashboard
+
+      - key: TOMATO_MODEL_ID
+        value: "1Cq3APxHdK3H-o_FZCpv71OWB87awuS7A"
+
+      - key: BANANA_MODEL_ID
+        value: "1WcnYiuTRbT4OV-N4mWcktqafDZWVM2Ao"
+
+    # --- Health Check ---
+    healthCheckPath: /
