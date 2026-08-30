@@ -46,7 +46,7 @@ def download_model(filename: str, file_id: str) -> None:
     try:
         import gdown
         url = f"https://drive.google.com/uc?id={file_id}"
-        gdown.download(url, str(dest), quiet=False, fuzzy=True)
+        gdown.download(url, str(dest), quiet=False)
 
         if not dest.exists() or dest.stat().st_size < 1_000_000:
             print(f"[ERROR] Download failed or file too small: {dest}", file=sys.stderr)
