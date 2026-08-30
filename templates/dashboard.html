@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farm Dashboard - Analysis Results</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 25%, #7e22ce 50%, #4c1d95 75%, #1e3c72 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            min-height: 100vh;
+            padding: 30px 20px;
+            color: #333;
+        }
+
+        @keyframes gradientShift {
+
+            0%,
+            100% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 45px;
+            animation: fadeInDown 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-40px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 48px;
+            font-weight: 900;
+            margin-bottom: 12px;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            letter-spacing: -1px;
+        }
+
+        .header p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 19px;
+            font-weight: 500;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+
+        .card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%);
+            backdrop-filter: blur(30px) saturate(180%);
+            border-radius: 28px;
+            padding: 30px;
+            box-shadow:
+                0 15px 50px rgba(0, 0, 0, 0.25),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            animation-fill-mode: both;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.6s;
+        }
+
+        .card:hover::before {
+            left: 100%;
+        }
+
+        .card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow:
+                0 20px 60px rgba(0, 0, 0, 0.35),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        }
+
+        .card:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .card:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .card:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card h2 {
+            color: #2d3748;
+            font-size: 26px;
+            font-weight: 800;
+            margin-bottom: 28px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 3px solid #edf2f7;
+            padding-bottom: 18px;
+        }
+
+        .card.full-width {
+            grid-column: 1 / -1;
+        }
+
+        /* Card-specific gradient backgrounds */
+        .card:has(.crop-analysis) {
+            background: linear-gradient(135deg, rgba(255, 245, 235, 0.98) 0%, rgba(255, 235, 220, 0.98) 100%);
+        }
+
+        .card:has(.weather-grid) {
+            background: linear-gradient(135deg, rgba(224, 247, 250, 0.98) 0%, rgba(200, 230, 255, 0.98) 100%);
+        }
+
+        .card:has(.schedule-item) {
+            background: linear-gradient(135deg, rgba(243, 232, 255, 0.98) 0%, rgba(230, 220, 255, 0.98) 100%);
+        }
+
+        .card:has(.economy-grid) {
+            background: linear-gradient(135deg, rgba(255, 250, 230, 0.98) 0%, rgba(255, 240, 200, 0.98) 100%);
+        }
+
+        /* Crop Analysis with Scanning Animation */
+        .crop-analysis {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 30px;
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            padding: 40px 30px;
+            border-radius: 20px;
+            position: relative;
+        }
+
+        .crop-image {
+            width: 280px;
+            height: 280px;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3);
+            border: 5px solid white;
+            position: relative;
+        }
+
+        .crop-image::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, transparent 0%, rgba(102, 126, 234, 0.3) 50%, transparent 100%);
+            animation: scanEffect 2s ease-in-out infinite;
+        }
+
+        @keyframes scanEffect {
+
+            0%,
+            100% {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+
+            50% {
+                transform: translateY(100%);
+                opacity: 1;
+            }
+        }
+
+        .crop-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .crop-details {
+            width: 100%;
+        }
+
+        .info-row {
+            margin-bottom: 20px;
+        }
+
+        .info-row label {
+            display: block;
+            font-size: 16px;
+            font-weight: 700;
+            color: #6c4a00;
+            margin-bottom: 10px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 15px;
+            margin-top: 6px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            animation: popIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes popIn {
+            from {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .badge-success {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+            color: #0d5e3a;
+        }
+
+        .badge-warning {
+            background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+            color: #6c4a00;
+        }
+
+        .badge-danger {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+            color: #9b2c2c;
+        }
+
+        .confidence {
+            font-size: 14px;
+            color: #2d3748;
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+        }
+
+        .confidence-bar {
+            flex: 1;
+            height: 8px;
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #11998e 0%, #38ef7d 100%);
+            border-radius: 10px;
+            animation: fillBar 1.5s ease-out;
+        }
+
+        @keyframes fillBar {
+            from {
+                width: 0%;
+            }
+        }
+
+        /* Weather Styles */
+        .weather-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .weather-day {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            padding: 20px 24px;
+            border-radius: 18px;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            text-align: left;
+        }
+
+        .weather-day:hover {
+            transform: translateX(8px) scale(1.02);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .weather-date {
+            font-size: 15px;
+            color: #2d3748;
+            font-weight: 800;
+            min-width: 100px;
+        }
+
+        .weather-icon {
+            font-size: 40px;
+            animation: float 3s ease-in-out infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-8px);
+            }
+        }
+
+        .weather-temp {
+            font-weight: 900;
+            color: #2d3748;
+            font-size: 24px;
+            min-width: 90px;
+        }
+
+        .weather-desc {
+            font-size: 14px;
+            color: #4a5568;
+            flex: 1;
+        }
+
+        .alert-box {
+            margin-top: 18px;
+            padding: 15px;
+            background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+            border-left: 5px solid #e17055;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #6c4a00;
+            box-shadow: 0 4px 15px rgba(225, 112, 85, 0.2);
+        }
+
+        .alert-box ul {
+            padding-left: 22px;
+            margin-top: 8px;
+        }
+
+        /* Schedule Styles */
+        .schedule-item {
+            display: flex;
+            gap: 22px;
+            padding: 24px;
+            background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
+            border-radius: 18px;
+            margin-bottom: 18px;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .schedule-item:hover {
+            transform: translateX(12px) scale(1.02);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .icon-box {
+            font-size: 40px;
+            flex-shrink: 0;
+            width: 70px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border-radius: 18px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            animation: rotate 4s ease-in-out infinite;
+        }
+
+        @keyframes rotate {
+
+            0%,
+            100% {
+                transform: rotate(0deg);
+            }
+
+            50% {
+                transform: rotate(5deg);
+            }
+        }
+
+        .task-content h4 {
+            font-size: 19px;
+            font-weight: 800;
+            color: #4a148c;
+            margin-bottom: 10px;
+        }
+
+        .task-content p {
+            color: #2d3748;
+            font-size: 16px;
+            line-height: 1.7;
+            font-weight: 500;
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 35px;
+            padding: 18px 35px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 18px;
+            font-weight: 800;
+            font-size: 17px;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-back:hover {
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.7);
+        }
+
+        /* Language Badge */
+        .lang-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 10px 20px;
+            border-radius: 25px;
+            color: white;
+            font-size: 15px;
+            font-weight: 700;
+            margin-top: 12px;
+            box-shadow: 0 5px 20px rgba(245, 87, 108, 0.4);
+        }
+
+        /* Voice Button */
+        .voice-btn {
+            margin-left: auto;
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: #2d3748;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 6px 20px rgba(250, 112, 154, 0.4);
+        }
+
+        .voice-btn:hover {
+            transform: scale(1.08);
+            box-shadow: 0 8px 25px rgba(250, 112, 154, 0.6);
+        }
+
+        /* Economy Styles */
+        .economy-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 18px;
+            margin-top: 22px;
+        }
+
+        .economy-item {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            padding: 24px 18px;
+            border-radius: 18px;
+            text-align: center;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .economy-item:hover {
+            transform: translateY(-8px) scale(1.05);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .economy-item .label {
+            display: block;
+            font-size: 14px;
+            color: #6c4a00;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .economy-item .value {
+            font-size: 24px;
+            font-weight: 900;
+            color: #2d3748;
+        }
+
+        .economy-item .value.highlight {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+
+            -webkit-text-fill-color: transparent;
+        }
+
+        .economy-item .value.danger {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .economy-advice {
+            margin-top: 22px;
+            padding: 18px;
+            background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+            border-left: 5px solid #e17055;
+            border-radius: 12px;
+            font-size: 15px;
+            color: #6c4a00;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(225, 112, 85, 0.2);
+        }
+
+        /* Treatment Card Styles */
+        .treatment-section {
+            margin-top: 18px;
+        }
+
+        .disease-desc {
+            margin-bottom: 22px;
+            font-style: italic;
+            color: #2d3748;
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            padding: 18px;
+            border-radius: 12px;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .treatment-group {
+            margin-bottom: 18px;
+            padding: 18px;
+            border-radius: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .treatment-group:hover {
+            transform: translateX(8px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .treatment-group:nth-child(2) {
+            background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+        }
+
+        .treatment-group:nth-child(3) {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        }
+
+        .treatment-group:nth-child(4) {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+        }
+
+        .treatment-group h4 {
+            margin-bottom: 12px;
+            font-size: 18px;
+            font-weight: 800;
+        }
+
+        .treatment-group ul {
+            padding-left: 22px;
+        }
+
+        .treatment-group li {
+            margin-bottom: 8px;
+            font-size: 15px;
+            color: #2d3748;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 36px;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .crop-analysis {
+                flex-direction: column;
+            }
+
+            .weather-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .economy-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .highlight-word {
+            background-color: #ffeb3b;
+            color: #000;
+            border-radius: 4px;
+            box-shadow: 0 0 5px rgba(255, 235, 59, 0.5);
+            transition: background-color 0.1s;
+        }
+    </style>
+
+
+
+
+
+    <script>
+        let currentUtterance = null;
+        let isSpeaking = false;
+
+        // Optimized Word Wrapper
+        function wrapWords(element) {
+            if (!element || element.dataset.speaking) return;
+            const text = element.innerText;
+            const words = text.split(/(\s+)/);
+            element.innerHTML = words.map(w => {
+                if (w.trim().length === 0) return w;
+                return '<span class="speak-word">' + w + '</span>';
+            }).join('');
+            element.dataset.speaking = "true";
+        }
+
+        function clearHighlights() {
+            document.querySelectorAll('.highlight-word').forEach(el => el.classList.remove('highlight-word'));
+        }
+
+        function speakAll() {
+            window.speechSynthesis.cancel();
+            clearHighlights();
+            isSpeaking = true;
+
+            // 1. Collect all atomic elements in order
+            const allElements = [];
+
+            // Description
+            const desc = document.querySelector('.disease-desc');
+            if (desc) allElements.push(desc);
+
+            // Treatment 
+            document.querySelectorAll('.treatment-group').forEach(group => {
+                const h4 = group.querySelector('h4');
+                if (h4) allElements.push(h4);
+                group.querySelectorAll('li').forEach(li => allElements.push(li));
+            });
+
+            // Schedule 
+            document.querySelectorAll('.schedule-item').forEach(item => {
+                const h4 = item.querySelector('h4');
+                const p = item.querySelector('p');
+                if (h4) allElements.push(h4);
+                if (p) allElements.push(p);
+            });
+
+            // 2. Batch elements into chunks suitable for TTS (e.g. < 250 chars)
+            // This balances latency (fewer calls) with reliability (no skipping)
+            const MAX_CHUNK_LENGTH = 250;
+            const sections = [];
+            let currentBatch = [];
+            let currentLength = 0;
+
+            allElements.forEach(el => {
+                const textLen = el.innerText.length;
+
+                // If adding this element exceeds max length, and we have items in batch, push batch
+                if (currentLength + textLen > MAX_CHUNK_LENGTH && currentBatch.length > 0) {
+                    sections.push(currentBatch);
+                    currentBatch = [];
+                    currentLength = 0;
+                }
+
+                currentBatch.push(el);
+                currentLength += textLen;
+            });
+
+            // Push remaining
+            if (currentBatch.length > 0) sections.push(currentBatch);
+
+            // 3. Process batches
+            let sectionIndex = 0;
+
+            function processNextSection() {
+                if (sectionIndex >= sections.length || !isSpeaking) {
+                    isSpeaking = false;
+                    return;
+                }
+
+                const elements = sections[sectionIndex];
+
+                let fullText = "";
+                let spanMapping = [];
+
+                elements.forEach(el => {
+                    wrapWords(el);
+                    const spans = Array.from(el.querySelectorAll('.speak-word'));
+
+                    spans.forEach(span => {
+                        const wordText = span.innerText;
+                        spanMapping.push({
+                            span: span,
+                            start: fullText.length,
+                            end: fullText.length + wordText.length
+                        });
+                        fullText += wordText + " ";
+                    });
+
+                    fullText += ". ";
+                });
+
+                const utterance = new SpeechSynthesisUtterance(fullText);
+
+                const lang = '{{ language if language else "en" }}';
+                const langCode = {
+                    'en': 'en-US', 'hi': 'hi-IN', 'te': 'te-IN', 'ta': 'ta-IN',
+                    'kn': 'kn-IN', 'mr': 'mr-IN', 'bn': 'bn-IN', 'gu': 'gu-IN',
+                    'pa': 'pa-IN', 'ml': 'ml-IN'
+                }[lang] || 'en-US';
+
+                utterance.lang = langCode;
+                utterance.rate = 1.1;
+
+                utterance.onboundary = (event) => {
+                    if (event.name !== 'word') return;
+
+                    const current = document.querySelector('.highlight-word');
+                    if (current) current.classList.remove('highlight-word');
+
+                    const charIndex = event.charIndex;
+                    const match = spanMapping.find(m => charIndex >= m.start && charIndex < m.end + 5);
+
+                    if (match) {
+                        match.span.classList.add('highlight-word');
+                    }
+                };
+
+                utterance.onend = () => {
+                    clearHighlights();
+                    sectionIndex++;
+                    setTimeout(processNextSection, 10);
+                };
+
+                utterance.onerror = () => {
+                    sectionIndex++;
+                    processNextSection();
+                };
+
+                window.speechSynthesis.speak(utterance);
+            }
+
+            processNextSection();
+        }
+
+        window.addEventListener('load', () => {
+            const confidenceValue = parseFloat('{{ confidence if confidence else 0 }}');
+            const confidenceFill = document.querySelector('.confidence-fill');
+            if (confidenceFill) {
+                confidenceFill.style.width = confidenceValue + '%';
+            }
+        });
+    </script>
+
+
+
+
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌾 Smart Farm Dashboard</h1>
+            <p>Your Comprehensive Crop Analysis Report</p>
+            {% if language and language != 'en' %}
+            <div class="lang-badge">
+                🌐 Recommendations in {{ language_name }}
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="grid">
+            <!-- Crop Status Card -->
+            <div class="card">
+                <h2>📸 Crop Health Analysis</h2>
+                <div class="crop-analysis">
+                    <div class="crop-image">
+                        <img src="{{ url_for('static', filename=filename) }}" alt="Crop Image">
+                    </div>
+                    <div class="crop-details">
+                        <div class="info-row">
+                            <strong>Disease Status:</strong><br>
+                            <span
+                                class="status-badge {{ 'badge-success' if disease == 'Healthy' else 'badge-danger' }}">
+                                {{ disease }}
+                            </span>
+                        </div>
+                        <div class="info-row">
+                            <strong>Growth Stage:</strong><br>
+                            <span class="status-badge badge-warning">{{ stage }}</span>
+                        </div>
+                        <div class="confidence">
+                            <span>✓ Confidence: {{ confidence }}%</span>
+                            <div class="confidence-bar">
+                                <div class="confidence-fill" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Treatment Plan Card -->
+            <div class="card">
+                <h2>💊 Treatment Plan</h2>
+                <div class="treatment-section">
+                    <p class="disease-desc"><strong>Description:</strong> {{ recommendations.description }}</p>
+
+                    <div class="treatment-group">
+                        <h4 style="color: #e17055;">🧪 Chemical Control</h4>
+                        <ul>
+                            {% for item in recommendations.chemical %}
+                            <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <div class="treatment-group">
+                        <h4 style="color: #00b894;">🌿 Organic Control</h4>
+                        <ul>
+                            {% for item in recommendations.organic %}
+                            <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <div class="treatment-group">
+                        <h4 style="color: #d63031;">🌾 Cultural Control</h4>
+                        <ul>
+                            {% for item in recommendations.cultural %}
+                            <li>{{ item }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weather Card -->
+            <div class="card">
+                <h2>☁️ Weather Forecast</h2>
+                {% if weather_error %}
+                <div class="error-message">⚠️ {{ weather_error }}</div>
+                {% else %}
+                <div class="weather-grid">
+                    {% for day in forecast[:5] %}
+                    <div class="weather-day">
+                        <div class="weather-date">{{ day.date }}</div>
+                        <div class="weather-icon">
+                            {{ "☀️" if "Clear" in day.weather else "☁️" if "Cloud" in day.weather else "🌧️" }}
+                        </div>
+                        <div class="weather-temp">{{ day.temp }}°C</div>
+                        <div class="weather-desc">{{ day.description }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% if risks %}
+                <div class="alert-box">
+                    <strong>⚠️ Weather Alerts</strong>
+                    <ul>
+                        {% for risk in risks %}
+                        <li>{{ risk }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Economic Intelligence -->
+        <div class="card full-width" style="margin-bottom: 30px;">
+            <h2>💰 Smart Profit Predictor</h2>
+
+            <div class="economy-grid">
+                <div class="economy-item">
+                    <span class="label">Market Price ({{ city|capitalize }})</span>
+                    <span class="value">{{ economics.currency }}{{ economics.price_per_kg }}/kg</span>
+                </div>
+                <div class="economy-item">
+                    <span class="label">Potential Income</span>
+                    <span class="value highlight">{{ economics.currency }} {{ economics.potential_income }}</span>
+                </div>
+                <div class="economy-item">
+                    <span class="label">Est. Loss due to Disease</span>
+                    <span class="value danger">-{{ economics.currency }} {{ economics.loss_amount }}</span>
+                </div>
+                <div class="economy-item">
+                    <span class="label">Expected Yield</span>
+                    <span class="value">{{ economics.yield_expected }} Tons/acre</span>
+                </div>
+            </div>
+
+            <div class="economy-advice">
+                <p><strong>💡 Business Advice:</strong> {{ economic_advice }}</p>
+            </div>
+        </div>
+
+        <!-- Farming Schedule -->
+        <div class="card full-width">
+            <div class="card-header"
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; border-bottom: 3px solid #edf2f7; padding-bottom: 18px;">
+                <h2 style="margin: 0; border: none; padding: 0;">🗓️ Recommended Farming Schedule</h2>
+                {% if schedule %}
+                <button onclick="speakAll()" class="voice-btn" title="Listen to treatment plan and schedule">
+                    🔊 Listen
+                </button>
+                {% endif %}
+            </div>
+            {% if schedule %}
+            {% for item in schedule %}
+            <div class="schedule-item">
+                <div class="icon-box">{{ item.icon }}</div>
+                <div class="task-content">
+                    <h4>{{ item.date }}: {{ item.task }}</h4>
+                    <p>{{ item.details }}</p>
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <p style="color: #666; text-align: center; padding: 20px;">
+                No specific actions required at this time. Continue regular monitoring.
+            </p>
+            {% endif %}
+        </div>
+
+        <div style="text-align: center;">
+            <a href="/" class="btn-back">
+                ⬅ Analyze Another Crop
+            </a>
+        </div>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,64 @@
+# ============================================================
+# .gitignore — Crop Disease Identification Project
+# ============================================================
+
+# Secrets — NEVER commit
+.env
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# ML Model binaries (large files — store in model registry or LFS)
+models/*.h5
+models/*.keras
+models/*.pkl
+*.h5
+*.keras
+
+# Uploaded images (runtime artefacts)
+static/uploads/
+
+# Logs
+logs/
+
+# Datasets (large directories)
+dataset/
+dataset_banana/
+crop_classifier_dataset/
+
+# Research variants (experimental, not part of main app)
+Variant-b(MultiLabel Classification)/
+Variant-c(Object Detection)/
+
+# Unnamed folders
+New folder/
+
+# OS artefacts
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor artefacts
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Pytest cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build artefacts
+dist/
+build/
+*.egg-info/

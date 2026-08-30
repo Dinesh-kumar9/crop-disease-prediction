@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beyond Detection — Crop Health Management System</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0a0e17;
+            --bg-card: rgba(255, 255, 255, 0.04);
+            --accent-green: #34d399;
+            --accent-emerald: #10b981;
+            --accent-teal: #14b8a6;
+            --accent-lime: #a3e635;
+            --accent-amber: #fbbf24;
+            --accent-orange: #f97316;
+            --accent-red: #ef4444;
+            --accent-sky: #38bdf8;
+            --accent-violet: #8b5cf6;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --glass-bg: rgba(15, 23, 42, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.08);
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* ─── Slide Container ─── */
+        .slide-deck {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 60px 80px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateX(60px);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-y: auto;
+        }
+
+        .slide.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(0);
+        }
+
+        .slide.prev {
+            transform: translateX(-60px);
+        }
+
+        /* ─── Backgrounds ─── */
+        .slide::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            z-index: -1;
+        }
+
+        .slide-title-bg::before {
+            background:
+                radial-gradient(ellipse 80% 60% at 50% 40%, rgba(16, 185, 129, 0.12) 0%, transparent 70%),
+                radial-gradient(circle at 20% 80%, rgba(56, 189, 248, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+                var(--bg-dark);
+        }
+
+        .slide-green-bg::before {
+            background:
+                radial-gradient(ellipse 60% 50% at 70% 50%, rgba(16, 185, 129, 0.1) 0%, transparent 70%),
+                var(--bg-dark);
+        }
+
+        .slide-blue-bg::before {
+            background:
+                radial-gradient(ellipse 60% 50% at 30% 50%, rgba(56, 189, 248, 0.1) 0%, transparent 70%),
+                var(--bg-dark);
+        }
+
+        .slide-violet-bg::before {
+            background:
+                radial-gradient(ellipse 60% 50% at 60% 40%, rgba(139, 92, 246, 0.1) 0%, transparent 70%),
+                var(--bg-dark);
+        }
+
+        .slide-amber-bg::before {
+            background:
+                radial-gradient(ellipse 60% 50% at 40% 60%, rgba(251, 191, 36, 0.08) 0%, transparent 70%),
+                var(--bg-dark);
+        }
+
+        .slide-red-bg::before {
+            background:
+                radial-gradient(ellipse 60% 50% at 50% 50%, rgba(239, 68, 68, 0.08) 0%, transparent 70%),
+                var(--bg-dark);
+        }
+
+        /* ─── Typography ─── */
+        .slide-number {
+            position: absolute;
+            top: 28px;
+            right: 40px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .title-super {
+            font-size: clamp(48px, 5vw, 72px);
+            font-weight: 900;
+            line-height: 1.1;
+            background: linear-gradient(135deg, var(--accent-green) 0%, var(--accent-teal) 40%, var(--accent-sky) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .title-large {
+            font-size: clamp(32px, 3.5vw, 52px);
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 16px;
+        }
+
+        .title-medium {
+            font-size: clamp(24px, 2.5vw, 36px);
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .subtitle {
+            font-size: clamp(16px, 1.4vw, 22px);
+            font-weight: 400;
+            color: var(--text-secondary);
+            text-align: center;
+            max-width: 800px;
+            line-height: 1.6;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 18px;
+        }
+
+        .tag-green {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-green);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+        }
+
+        .tag-blue {
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--accent-sky);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+        }
+
+        .tag-violet {
+            background: rgba(139, 92, 246, 0.15);
+            color: var(--accent-violet);
+            border: 1px solid rgba(139, 92, 246, 0.25);
+        }
+
+        .tag-amber {
+            background: rgba(251, 191, 36, 0.15);
+            color: var(--accent-amber);
+            border: 1px solid rgba(251, 191, 36, 0.25);
+        }
+
+        .tag-red {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--accent-red);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+        }
+
+        /* ─── Content helpers ─── */
+        .content-box {
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        .three-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 24px;
+            width: 100%;
+            max-width: 1100px;
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 28px;
+            backdrop-filter: blur(12px);
+            transition: transform 0.3s, border-color 0.3s;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .glass-card h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .glass-card p,
+        .glass-card li {
+            font-size: 15px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .glass-card ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .glass-card ul li::before {
+            content: '▸ ';
+            color: var(--accent-green);
+            font-weight: 700;
+        }
+
+        .icon-big {
+            font-size: 36px;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        /* ─── Comparison Table ─── */
+        .comp-table {
+            width: 100%;
+            max-width: 1100px;
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 12px;
+            overflow: hidden;
+            font-size: 14px;
+        }
+
+        .comp-table thead th {
+            background: rgba(16, 185, 129, 0.12);
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+            color: var(--accent-green);
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .comp-table thead th:last-child {
+            background: rgba(16, 185, 129, 0.22);
+            color: #fff;
+        }
+
+        .comp-table tbody td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--glass-border);
+            color: var(--text-secondary);
+            vertical-align: top;
+        }
+
+        .comp-table tbody td:first-child {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .comp-table tbody td:last-child {
+            color: var(--accent-green);
+            font-weight: 500;
+        }
+
+        .comp-table tbody tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        /* ─── Flow Diagram ─── */
+        .flow-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            max-width: 1100px;
+        }
+
+        .flow-step {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 16px 22px;
+            text-align: center;
+            min-width: 130px;
+            transition: transform 0.3s;
+        }
+
+        .flow-step:hover {
+            transform: scale(1.06);
+        }
+
+        .flow-step .icon {
+            font-size: 28px;
+            margin-bottom: 6px;
+        }
+
+        .flow-step .label {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .flow-arrow {
+            font-size: 22px;
+            color: var(--accent-green);
+            animation: pulse-right 1.5s infinite;
+        }
+
+        @keyframes pulse-right {
+
+            0%,
+            100% {
+                opacity: 0.4;
+                transform: translateX(0);
+            }
+
+            50% {
+                opacity: 1;
+                transform: translateX(4px);
+            }
+        }
+
+        /* ─── Code Block ─── */
+        .code-block {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 24px 28px;
+            font-family: 'Fira Code', monospace;
+            font-size: 14px;
+            line-height: 1.8;
+            color: var(--text-secondary);
+            max-width: 1100px;
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .code-block .kw {
+            color: var(--accent-violet);
+            font-weight: 600;
+        }
+
+        .code-block .fn {
+            color: var(--accent-sky);
+        }
+
+        .code-block .str {
+            color: var(--accent-green);
+        }
+
+        .code-block .cmt {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .code-block .op {
+            color: var(--accent-amber);
+        }
+
+        /* ─── Stat Cards ─── */
+        .stat-card {
+            text-align: center;
+            padding: 28px;
+        }
+
+        .stat-card .stat-value {
+            font-size: clamp(36px, 4vw, 56px);
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-green), var(--accent-sky));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-card .stat-label {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        /* ─── Bar Chart ─── */
+        .bar-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 32px;
+            height: 200px;
+            padding: 0 20px;
+            justify-content: center;
+        }
+
+        .bar-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .bar {
+            width: 60px;
+            border-radius: 8px 8px 0 0;
+            transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .bar .bar-value {
+            position: absolute;
+            top: -28px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 14px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .bar-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-align: center;
+            font-weight: 500;
+        }
+
+        /* ─── Highlight box ─── */
+        .highlight-box {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(56, 189, 248, 0.08));
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 14px;
+            padding: 24px 32px;
+            max-width: 900px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .highlight-box p {
+            font-size: 18px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+        }
+
+        .highlight-box strong {
+            color: var(--accent-green);
+        }
+
+        /* ─── VS comparison ─── */
+        .vs-container {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 24px;
+            align-items: center;
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        .vs-badge {
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--accent-orange), var(--accent-red));
+            border-radius: 50%;
+            font-weight: 900;
+            font-size: 16px;
+            color: #fff;
+        }
+
+        /* ─── Navigation ─── */
+        .nav-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 56px;
+            background: rgba(10, 14, 23, 0.85);
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            backdrop-filter: blur(12px);
+            z-index: 100;
+        }
+
+        .nav-btn {
+            width: 44px;
+            height: 36px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            color: var(--text-secondary);
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .nav-btn:hover {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-green);
+            border-color: rgba(16, 185, 129, 0.3);
+        }
+
+        .nav-dots {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .nav-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            opacity: 0.4;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .nav-dot.active {
+            width: 24px;
+            border-radius: 4px;
+            background: var(--accent-green);
+            opacity: 1;
+        }
+
+        .nav-counter {
+            font-family: 'Fira Code', monospace;
+            font-size: 13px;
+            color: var(--text-muted);
+            min-width: 52px;
+            text-align: center;
+        }
+
+        /* ─── Progress bar ─── */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-green), var(--accent-sky));
+            z-index: 101;
+            transition: width 0.4s ease;
+        }
+
+        /* ─── Animations ─── */
+        .fade-up {
+            animation: fadeUp 0.6s ease forwards;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(24px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .delay-1 {
+            animation-delay: 0.1s;
+            opacity: 0;
+        }
+
+        .delay-2 {
+            animation-delay: 0.2s;
+            opacity: 0;
+        }
+
+        .delay-3 {
+            animation-delay: 0.3s;
+            opacity: 0;
+        }
+
+        .delay-4 {
+            animation-delay: 0.4s;
+            opacity: 0;
+        }
+
+        .delay-5 {
+            animation-delay: 0.5s;
+            opacity: 0;
+        }
+
+        /* ─── Team / Author ─── */
+        .team-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .team-list li {
+            font-size: 16px;
+            padding: 6px 0;
+            color: var(--text-secondary);
+        }
+
+        /* ─── Floating particles ─── */
+        .particle-canvas {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* ─── Dynamic advice cards ─── */
+        .advice-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        .advice-card {
+            border-radius: 14px;
+            padding: 24px;
+        }
+
+        .advice-card.static-adv {
+            background: rgba(239, 68, 68, 0.06);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .advice-card.dynamic-adv {
+            background: rgba(16, 185, 129, 0.06);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .advice-card h4 {
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+
+        .advice-card.static-adv h4 {
+            color: var(--accent-red);
+        }
+
+        .advice-card.dynamic-adv h4 {
+            color: var(--accent-green);
+        }
+
+        .advice-card p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        /* ─── Future grid ─── */
+        .future-card {
+            text-align: center;
+            padding: 32px 20px;
+        }
+
+        .future-card .icon-big {
+            font-size: 42px;
+        }
+
+        .future-card h3 {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="progress-bar" id="progressBar"></div>
+    <canvas class="particle-canvas" id="particles"></canvas>
+
+    <div class="slide-deck" id="deck">
+
+        <!-- ══════════════ SLIDE 1 — TITLE ══════════════ -->
+        <div class="slide slide-title-bg active" data-slide="0">
+            <span class="slide-number">01 / 15</span>
+            <div class="tag tag-green fade-up">Research Presentation</div>
+            <h1 class="title-super fade-up delay-1">Beyond Detection</h1>
+            <p class="subtitle fade-up delay-2" style="font-size:clamp(14px,1.3vw,20px); max-width: 900px;">
+                A Context-Aware Crop Health Management System Integrating<br>
+                <strong style="color:var(--accent-green);">Deep Learning</strong> and
+                <strong style="color:var(--accent-sky);">Real-Time Weather Intelligence</strong>
+            </p>
+            <div style="margin-top:32px; text-align:center;" class="fade-up delay-3">
+                <p style="color:var(--text-muted); font-size:14px;">Presented by</p>
+                <p style="font-size:18px; font-weight:600; margin-top:4px;">Team — 124B</p>
+            </div>
+        </div>
+
+        <!-- ══════════════ SLIDE 2 — AGENDA ══════════════ -->
+        <div class="slide slide-green-bg" data-slide="1">
+            <span class="slide-number">02 / 15</span>
+            <div class="tag tag-green">Overview</div>
+            <h2 class="title-large" style="text-align:center;">Agenda</h2>
+            <div class="three-col" style="margin-top:24px;">
+                <div class="glass-card fade-up delay-1">
+                    <span class="icon-big">📌</span>
+                    <h3>Problem & Gap</h3>
+                    <p>Why current crop disease detection falls short</p>
+                </div>
+                <div class="glass-card fade-up delay-2">
+                    <span class="icon-big">🧠</span>
+                    <h3>Our Approach</h3>
+                    <p>MobileNetV2 + Weather-Aware Decision Engine</p>
+                </div>
+                <div class="glass-card fade-up delay-3">
+                    <span class="icon-big">📊</span>
+                    <h3>Results & Demo</h3>
+                    <p>Performance metrics, case studies & future scope</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════ SLIDE 3 — PROBLEM ══════════════ -->
+        <div class="slide slide-red-bg" data-slide="2">
+            <span class="slide-number">03 / 15</span>
+            <div class="tag tag-red">The Challenge</div>
+            <h2 class="title-large" style="text-align:center;">The Problem</h2>
+            <div class="two-col" style="margin-top:24px;">
+                <div class="glass-card">
+                    <span class="icon-big">🌾</span>
+                    <h3>Food Security Crisis</h3>
+                    <ul>
+                        <li>Crop diseases cause <strong style="color:var(--accent-red);">20-40%</strong> annual yield
+                            loss worldwide</li>
+                        <li>Farmers rely on <strong>manual diagnosis</strong> — slow & error-prone</li>
+                        <li>Late detection escalates pesticide costs & environmental damage</li>
+                    </ul>
+                </div>
+                <div class="glass-card">
+                    <span class="icon-big">⚠️</span>
+                    <h3>Existing AI Falls Short</h3>
+                    <ul>
+                        <li>Current apps only say <em>"This is Early Blight"</em></li>
+                        <li><strong style="color:var(--accent-red);">No weather context</strong> — "Spray X" even when
+                            rain is coming</li>
+                        <li>Rain washes away pesticides → wasted money</li>
+                        <li>No crop-stage-aware advice</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════ SLIDE 4 — LITERATURE ══════════════ -->
+        <div class="slide slide-blue-bg" data-slide="3">
+            <span class="slide-number">04 / 15</span>
+            <div class="tag tag-blue">Literature Review</div>
+            <h2 class="title-large" style="text-align:center;">Comparison with Existing Work</h2>
+            <table class="comp-table" style="margin-top:20px;">
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Mohanty et al. (2016)</th>
+                        <th>Zanzaney et al. (2023)</th>
+                        <th>Our System ✨</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Core AI Model</td>
+                        <td>AlexNet, GoogLeNet</td>
+                        <td>ResNet50, VGG16</td>
+                        <td>MobileNetV2 (Edge-optimized)</td>
+                    </tr>
+                    <tr>
+                        <td>Primary Goal</td>
+                        <td>Feasibility of DL</td>
+                        <td>Detection + Static Remedies</td>
+                        <td>Holistic Farm Management</td>
+                    </tr>
+                    <tr>
+                        <td>Input Data</td>
+                        <td>Images only</td>
+                        <td>Images only</td>
+                        <td>Images + Weather + Crop Stage</td>
+                    </tr>
+                    <tr>
+                        <td>Output</td>
+                        <td>Class Label</td>
+                        <td>Label + Text Remedies</td>
+                        <td>Label + Dynamic Schedule + Risk Alerts + Voice</td>
+                    </tr>
+                    <tr>
+                        <td>Language</td>
+                        <td>English</td>
+                        <td>English / Kannada</td>
+                        <td>English / Telugu (Text + Voice)</td>
+                    </tr>
+                    <tr>
+                        <td>Novelty</td>
+                        <td>Dataset proof</td>
+                        <td>Regional language</td>
+                        <td>Weather-Contextualized Advisory 🌦️</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ══════════════ SLIDE 5 — USP ══════════════ -->
+        <div class="slide slide-green-bg" data-slide="4">
+            <span class="slide-number">05 / 15</span>
+            <div class="tag tag-green">Unique Selling Point</div>
+            <h2 class="title-large" style="text-align:center;">From Detection → Actionable Intelligence</h2>
+            <div class="vs-container" style="margin-top:32px;">
+                <div class="glass-card static-adv" style="border-color: rgba(239,68,68,0.25);">
+                    <h4 style="color:var(--accent-red); margin-bottom:12px;">❌ Static Advice (Others)</h4>
+                    <p style="color:var(--text-secondary); font-size:15px; line-height:1.7;">
+                        <em>"Disease detected: Early Blight.<br>Spray Mancozeb fungicide."</em>
+                    </p>
+                    <p style="color:var(--text-muted); font-size:13px; margin-top:12px;">
+                        Ignores weather, wastes pesticide if it rains next hour.
+                    </p>
+                </div>
+                <div class="vs-badge">VS</div>
+                <div class="glass-card dynamic-adv" style="border-color: rgba(16,185,129,0.3);">
+                    <h4 style="color:var(--accent-green); margin-bottom:12px;">✅ Dynamic Advice (Ours)</h4>
+                    <p style="color:var(--text-secondary); font-size:15px; line-height:1.7;">
+                        <em>"Disease: Early Blight.<br>⛈️ Rain forecast 80% today.<br>⏳ DELAY spraying to
+                            Thursday."</em>
+                    </p>
+                    <p style="color:var(--text-muted); font-size:13px; margin-top:12px;">
+                        Context-aware. Saves money. Better outcomes.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════ SLIDE 6 — ARCHITECTURE ══════════════ -->
+        <div class="slide slide-violet-bg" data-slide="5">
+            <span class="slide-number">06 / 15</span>
+            <div class="tag tag-violet">System Design</div>
+            <h2 class="title-large" style="text-align:center;">System Architecture</h2>
+            <div class="flow-row" style="margin-top:32px;">
+                <div class="flow-step">
+                    <div class="icon">📸</div>
+                    <div class="label">Upload<br>Image</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step" style="border-color:rgba(139,92,246,0.3);">
+                    <div class="icon">🧠</div>
+                    <div class="label">MobileNetV2<br>Classifier</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step" style="border-color:rgba(56,189,248,0.3);">
+                    <div class="icon">🌦️</div>
+                    <div class="label">Weather<br>API</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step" style="border-color:rgba(16,185,129,0.3);">
+                    <div class="icon">⚙️</div>
+                    <div class="label">Decision<br>Engine</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step" style="border-color:rgba(251,191,36,0.3);">
+                    <div class="icon">📋</div>
+                    <div class="label">Dynamic<br>Schedule</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">
+                    <div class="icon">🔊</div>
+                    <div class="label">TTS<br>Output</div>
+                </div>
+            </div>
+            <div class="three-col" style="margin-top:32px;">
+                <div class="glass-card" style="text-align:center;">
+                    <span class="icon-big">🌐</span>
+                    <h3>Frontend</h3>
+                    <p>Responsive Web Dashboard<br>(HTML/CSS/JS)</p>
+                </div>
+                <div class="glass-card" style="text-align:center;">
+                    <span class="icon-big">🐍</span>
+                    <h3>Backend</h3>
+                    <p>Flask REST API<br>Orchestrator</p>
+                </div>
+                <div class="glass-card" style="text-align:center;">
+                    <span class="icon-big">☁️</span>
+                    <h3>External APIs</h3>
+                    <p>OpenWeatherMap<br>5-Day Forecast</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════ SLIDE 7 — MODULES ══════════════ -->
+        <div class="slide slide-green-bg" data-slide="6">
+            <span class="slide-number">07 / 15</span>
+            <div class="tag tag-green">Modules</div>
+            <h2 class="title-large" style="text-align:center;">Key Modules</h2>
+            <div class="three-col" style="margin-top:20px;">
+                <div class="glass-card">
+                    <span class="icon-big">🌡️</span>
+                    <h3>weather.py</h3>
+                    <p>Fetches real-time weather data & 5-day forecasts from OpenWeatherMap API</p>
+                </div>
+                <div class="glass-card">
+                    <span class="icon-big">📅</span>
+                    <h3>scheduler.py</h3>
+                    <p>Core Agri-Logic Engine — generates dynamic, context-aware farming schedules</p>
+                </div>
+                <div class="glass-card">
+                    <span class="icon-big">💡</span>
+                    <h3>advisor.py</h3>
+                    <p>Disease-specific remedies, nutrient guidance & bilingual advisory generation</p>
+                </div>
+            </div>
+            <div class="three-col" style="margin-top:20px;">
+                <div class="glass-card">
+                    <span class="icon-big">🌱</span>
+                    <h3>growth_stage.py</h3>
+                    <p>Determines crop growth stage for stage-specific recommendations</p>
+                </div>
+                <div class="glass-card">
+                    <span class="icon-big">🌐</span>
+                    <h3>translator.py</h3>
+                    <p>Multilingual support (English / Telugu) with Text-to-Speech integration</p>
+                </div>
+                <div class="glass-card">
+                    <span class="icon-big">💰</span>
+                    <h3>economics.py</h3>
+                    <p>Cost-benefit analysis for treatment recommendations</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════ SLIDE 8 — DEEP LEARNING ══════════════ -->
+        <div class="slide slide-blue-bg" data-slide="7">
+            <span class="slide-number">08 / 15</span>
+            <div class="tag tag-blue">Deep Learning</div>
+            <h2 class="title-large" style="text-align:center;">MobileNetV2 — Why?</h2>
+            <div class="two-col" style="margin-top:24px;">
+                <div>
+                    <div class="bar-chart" style="margin-bottom:20px;">
+                        <div class="bar-item">
+                            <div class="bar"
+                                style="height:180px; background:linear-gradient(to top, rgba(239,68,68,0.6), rgba(239,68,68,0.3));">
+                                <span class="bar-value" style="color:var(--accent-red);">~98 MB</span>
+                            </div>
+                            <span class="bar-label">ResNet50</span>
+                        </div>
+                        <div class="bar-item">
+                            <div class="bar"
+                                style="height:160px; background:linear-gradient(to top, rgba(251,191,36,0.6), rgba(251,191,36,0.3));">
+                                <span class="bar-value" style="color:var(--accent-amber);">~528 MB</span>
+                            </div>
+                            <span class="bar-label">VGG16</span>
+                        </div>
+                        <div class="bar-item">
+                            <div class="bar"
+                                style="height:30px; background:linear-gradient(to top, rgba(16,185,129,0.8), rgba(16,185,129,0.4));">
+                                <span class="bar-value" style="color:var(--accent-green);">~14 MB</span>
+                            </div>
+                            <span class="bar-label">MobileNetV2</span>
+                        </div>
+                    </div>
+                    <p style="text-align:center; color:var(--text-muted); font-size:13px;">Model Size Comparison</p>
+                </div>
+                <div class="glass-card">
+                    <h3>Key Advantages</h3>
+                    <ul>
+                        <li><strong style="color:var(--accent-green);">7× smaller</strong> than ResNet50</li>
+                        <li>Depthwise separable convolutions</li>
+                        <li>Optimized for mobile & edge devices</li>
+                        <li>Transfer learning on ImageNet</li>
+                        <li>Runs on farmers' low-end smartphones</li>
+                    </ul>
+                    <div style="margin-top:16px; padding:12px; background:rgba(16,185,129,0.08); border-radius:8px;">
+                        <p style="font-size:13px; color:var(--accent-green); font-weight:600;">Dataset</p>
+                        <p style="font-size:13px;">PlantVillage (Tomato) + Custom (Banana)</p>
+                        <p style="font-size:13px; color:var(--accent-green); font-weight:600; margin-top:8px;">Training
+                        </p>
+                        <p style="font-size:13px;">Transfer Learning + Data Augmentation</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════ SLIDE 9 — AGRI-LOGIC ENGINE ══════════════ -->
+        <div class="slide slide-green-bg" data-slide="8">
+            <span class="slide-number">09 / 15</span>
+            <div class="tag tag-green">Core Novelty</div>
+            <h2 class="title-large" style="text-align:center;">The Agri-Logic Engine</h2>
+            <div class="code-block" style="margin-top:24px;">
+                <span class="cmt"># scheduler.py — Context-Aware Decision Engine</span><br><br>
+                <span class="kw">def</span> <span class="fn">generate_schedule</span>(disease, forecast,
+                crop_stage):<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt"># Input: {Disease_Class, Rain%, Wind_Speed,
+                    Crop_Stage}</span><br><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">if</span> disease.type <span class="op">==</span> <span
+                    class="str">"Fungal"</span> <span class="kw">and</span> forecast.rain <span class="op">></span>
+                <span class="str">50%</span>:<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> <span class="str">"⏳
+                    DELAY Spraying — Rain expected"</span><br><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">if</span> crop_stage <span class="op">==</span> <span
+                    class="str">"Flowering"</span>:<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> <span class="str">"🌸
+                    Apply Potassium — Flowering stage"</span><br><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">if</span> forecast.wind <span class="op">></span> <span
+                    class="str">20 km/h</span>:<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> <span class="str">"💨
+                    Avoid spray — High wind drift risk"</span><br>
+            </div>
+            <div class="highlight-box" style="margin-top:24px;">
+                <p>The engine combines <strong>Disease Classification</strong>, <strong>5-Day Weather Forecast</strong>,
+                    and <strong>Crop Growth Stage</strong> to produce <strong>time-sensitive, actionable advice</strong>
+                    — not just labels.</p>
+            </div>
+        </div>
+
+        <!-- ══════════════ SLIDE 10 — MULTILINGUAL ══════════════ -->
+        <div class="slide slide-amber-bg" data-slide="9">
+            <span class="slide-number">10 / 15</span>
+            <div class="tag tag-amber">Accessibility</div>
+            <h2 class="title-large" style="text-align:center;">Multilingual & Voice Support</h2>
+            <div class="two-col" style="margin-top:24px;">
+                <div class="glass-card">
+                    <span class="icon-big">🗣️</span>
+                    <h3>Text-to-Speech (TTS)</h3>
+                    <ul>
+                        <li>Voice-enabled advisory output</li>
+                        <li>Optimized for low-latency feedback</li>
+                        <li>Helps illiterate / semi-literate farmers</li>
+                        <li>Plays advice aloud on mobile devices</li>
+                    </ul>
+                </div>
+                <div class="glass-card">
+                    <span class="icon-big">🌐</span>
+                    <h3>Bilingual Interface</h3>
+                    <ul>
+                        <li><strong style="color:var(--accent-sky);">English</strong> — Full text + voice</li>
+                        <li><strong style="color:var(--accent-amber);">Telugu (తెలుగు)</strong> — Full text + voice</li>
+                        <li>advisories in farmer's native language</li>
+                        <li>Bridges digital literacy gap</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="highlight-box" style="margin-top:24px;">
+                <p>Unlike existing systems that only support text in Kannada/English, our system delivers <strong>voice
+                        output in Telugu</strong> — making AI truly accessible to rural farmers.</p>
+            </div>
+        </div>
+
+        <!-- ══════════════ SLIDE 11 — CROPS COVERED ══════════════ -->
+        <div class="slide slide-green-bg" data-slide="10">
+            <span class="slide-number">11 / 15</span>
+            <div class="tag tag-green">Coverage</div>
+            <h2 class="title-large" style="text-align:center;">Crops & Diseases Covered</h2>
+            <div class="two-col" style="margin-top:24px;">
+                <div class="glass-card">
+                    <span class="icon-big">🍅</span>
+                    <h3>Tomato — 6 Classes</h3>
+                    <ul>
+                        <li>Healthy</li>
+                        <li>Bacterial Spot</li>
+                        <li>Early Blight</li>
+                        <li>Leaf Miner</li>
+                        <li>Potassium Deficiency</li>
+                        <li>Spotted Wilt Virus</li>
+                    </ul>
+                </div>
+                <div class="glass-card">
+                    <span class="icon-big">🍌</span>
+                    <h3>Banana — 4 Classes</h3>
+                    <ul>
+                        <li>Healthy</li>
+                        <li>Cordana</li>
+                        <li>Pestalotiopsis</li>
+                        <li>Sigatoka</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="three-col" style="margin-top:20px;">
+                <div class="glass-card stat-card">
+                    <div class="stat-value">10</div>
+                    <div class="stat-label">Disease Classes</div>
+                </div>
+                <div class="glass-card stat-card">
+                    <div class="stat-value">2</div>
+                    <div class="stat-label">Crop Types</div>
+                </div>
+                <div class="glass-card stat-card">
+                    <div class="stat-value">~14 MB</div>
+                    <div class="stat-label">Model Size</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════ SLIDE 12 — RESULTS ══════════════ -->
+        <div class="slide slide-violet-bg" data-slide="11">
+            <span class="slide-number">12 / 15</span>
+            <div class="tag tag-violet">Results</div>
+            <h2 class="title-large" style="text-align:center;">Experimental Results</h2>
+            <div class="three-col" style="margin-top:24px;">
+                <div class="glass-card stat-card">
+                    <div class="stat-value"
+                        style="background:linear-gradient(135deg, var(--accent-violet), var(--accent-sky)); -webkit-background-clip:text;">
+                        High</div>
+                    <div class="stat-label">Classification Accuracy</div>
+                    <p style="font-size:13px; color:var(--text-muted); margin-top:8px;">F1-Score evaluated on Tomato</p>
+                </div>
+                <div class="glass-card stat-card">
+                    <div class="stat-value"
+                        style="background:linear-gradient(135deg, var(--accent-green), var(--accent-teal)); -webkit-background-clip:text;">
+                        Fast</div>
+                    <div class="stat-label">Inference Time</div>
+                    <p style="font-size:13px; color:var(--text-muted); margin-top:8px;">Lightweight model = rapid
+                        predictions</p>
+                </div>
+                <div class="glass-card stat-card">
+                    <div class="stat-value"
+                        style="background:linear-gradient(135deg, var(--accent-amber), var(--accent-orange)); -webkit-background-clip:text;">
+                        Low</div>
+                    <div class="stat-label">TTS Latency</div>
+                    <p style="font-size:13px; color:var(--text-muted); margin-top:8px;">Optimized voice output</p>
+                </div>
+            </div>
+            <div class="advice-row" style="margin-top:24px;">
+                <div class="advice-card static-adv">
+                    <h4>❌ Static Advice</h4>
+                    <p><strong>Disease:</strong> Early Blight<br>
+                        <strong>Advice:</strong> "Spray Mancozeb immediately"<br><br>
+                        <em>Same advice regardless of weather ☁️🌧️☀️</em>
+                    </p>
+                </div>
+                <div class="advice-card dynamic-adv">
+                    <h4>✅ Dynamic Advice (Ours)</h4>
+                    <p><strong>Disease:</strong> Early Blight<br>
+                        <strong>Weather:</strong> Rain 80%, Wind 15km/h<br>
+                        <strong>Advice:</strong> "Delay spraying. Rain expected. Schedule for Thursday."<br><br>
+                        <em>Changes based on real-time conditions 🌦️📊</em>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════ SLIDE 13 — CASE STUDY ══════════════ -->
+        <div class="slide slide-green-bg" data-slide="12">
+            <span class="slide-number">13 / 15</span>
+            <div class="tag tag-green">Case Study</div>
+            <h2 class="title-large" style="text-align:center;">Example Workflow</h2>
+            <div class="flow-row" style="margin-top:32px; flex-wrap: wrap; gap: 16px;">
+                <div class="flow-step" style="min-width:160px;">
+                    <div class="icon">👨‍🌾</div>
+                    <div class="label">Farmer uploads<br>leaf image</div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step" style="min-width:160px; border-color:rgba(239,68,68,0.3);">
+                    <div class="icon">🔬</div>
+                    <div class="label">System detects<br><strong style="color:var(--accent-red);">Early Blight</strong>
+                    </div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step" style="min-width:160px; border-color:rgba(56,189,248,0.3);">
+                    <div class="icon">🌧️</div>
+                    <div class="label">Checks weather<br><strong style="color:var(--accent-sky);">Rain 80%</strong>
+                    </div>
+                </div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step" style="min-width:160px; border-color:rgba(16,185,129,0.3);">
+                    <div class="icon">📋</div>
+                    <div class="label">Advises:<br><strong style="color:var(--accent-green);">"Wait for rain to
+                            stop"</strong></div>
+                </div>
+            </div>
+            <div class="highlight-box" style="margin-top:36px;">
+                <p>The system doesn't just detect — it <strong>thinks</strong>. It considers weather, crop stage, and
+                    disease type to give the farmer a <strong>complete action plan</strong>, delivered in their language
+                    via voice.</p>
+            </div>
+        </div>
+
+        <!-- ══════════════ SLIDE 14 — FUTURE ══════════════ -->
+        <div class="slide slide-blue-bg" data-slide="13">
+            <span class="slide-number">14 / 15</span>
+            <div class="tag tag-blue">Future Scope</div>
+            <h2 class="title-large" style="text-align:center;">Future Work</h2>
+            <div class="three-col" style="margin-top:24px;">
+                <div class="glass-card future-card">
+                    <span class="icon-big">📡</span>
+                    <h3>IoT Integration</h3>
+                    <p>Soil moisture & temperature sensors for fully automated monitoring</p>
+                </div>
+                <div class="glass-card future-card">
+                    <span class="icon-big">🌶️</span>
+                    <h3>More Crops</h3>
+                    <p>Expand to Chilli, Cotton, Rice and other regional crops</p>
+                </div>
+                <div class="glass-card future-card">
+                    <span class="icon-big">📱</span>
+                    <h3>Mobile App</h3>
+                    <p>Offline-capable native app for areas with limited connectivity</p>
+                </div>
+            </div>
+            <div class="three-col" style="margin-top:20px;">
+                <div class="glass-card future-card">
+                    <span class="icon-big">🤖</span>
+                    <h3>AI Chatbot</h3>
+                    <p>Natural language Q&A for farmers' queries</p>
+                </div>
+                <div class="glass-card future-card">
+                    <span class="icon-big">🗺️</span>
+                    <h3>Regional Mapping</h3>
+                    <p>Disease outbreak heatmaps & community alerts</p>
+                </div>
+                <div class="glass-card future-card">
+                    <span class="icon-big">🛰️</span>
+                    <h3>Satellite Imagery</h3>
+                    <p>Large-scale field health monitoring via remote sensing</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════ SLIDE 15 — THANK YOU ══════════════ -->
+        <div class="slide slide-title-bg" data-slide="14">
+            <span class="slide-number">15 / 15</span>
+            <div class="tag tag-green">Conclusion</div>
+            <h2 class="title-super">Thank You!</h2>
+            <p class="subtitle" style="margin-top:8px;">
+                We moved crop disease management from <strong style="color:var(--accent-red);">static
+                    detection</strong><br>
+                to <strong style="color:var(--accent-green);">context-aware, actionable intelligence</strong>.
+            </p>
+            <div class="three-col" style="margin-top:36px; max-width:800px;">
+                <div class="glass-card" style="text-align:center; padding:20px;">
+                    <span class="icon-big">🧠</span>
+                    <p style="font-size:14px; font-weight:600;">MobileNetV2</p>
+                    <p style="font-size:12px; color:var(--text-muted);">Lightweight AI</p>
+                </div>
+                <div class="glass-card" style="text-align:center; padding:20px;">
+                    <span class="icon-big">🌦️</span>
+                    <p style="font-size:14px; font-weight:600;">Weather-Aware</p>
+                    <p style="font-size:12px; color:var(--text-muted);">Dynamic Decisions</p>
+                </div>
+                <div class="glass-card" style="text-align:center; padding:20px;">
+                    <span class="icon-big">🗣️</span>
+                    <p style="font-size:14px; font-weight:600;">Voice in Telugu</p>
+                    <p style="font-size:12px; color:var(--text-muted);">Accessible AI</p>
+                </div>
+            </div>
+            <p style="margin-top:36px; color:var(--text-muted); font-size:16px;">Questions? 🙋</p>
+        </div>
+
+    </div>
+
+    <!-- ─── Navigation ─── -->
+    <div class="nav-bar">
+        <button class="nav-btn" id="btnPrev" title="Previous (← arrow key)">◀</button>
+        <div class="nav-dots" id="navDots"></div>
+        <span class="nav-counter" id="navCounter">1 / 15</span>
+        <button class="nav-btn" id="btnNext" title="Next (→ arrow key)">▶</button>
+    </div>
+
+    <script>
+        (function () {
+            const TOTAL = 15;
+            let current = 0;
+            const slides = document.querySelectorAll('.slide');
+            const counter = document.getElementById('navCounter');
+            const dotsEl = document.getElementById('navDots');
+            const progress = document.getElementById('progressBar');
+
+            // Build dots
+            for (let i = 0; i < TOTAL; i++) {
+                const d = document.createElement('div');
+                d.className = 'nav-dot' + (i === 0 ? ' active' : '');
+                d.addEventListener('click', () => goTo(i));
+                dotsEl.appendChild(d);
+            }
+
+            function goTo(n) {
+                if (n < 0 || n >= TOTAL || n === current) return;
+                const goingForward = n > current;
+                slides[current].classList.remove('active');
+                if (goingForward) {
+                    slides[current].classList.add('prev');
+                } else {
+                    slides[current].classList.remove('prev');
+                }
+                current = n;
+                slides[current].classList.remove('prev');
+                slides[current].classList.add('active');
+                counter.textContent = (current + 1) + ' / ' + TOTAL;
+                progress.style.width = ((current + 1) / TOTAL * 100) + '%';
+                dotsEl.querySelectorAll('.nav-dot').forEach((d, i) => d.classList.toggle('active', i === current));
+            }
+
+            document.getElementById('btnPrev').addEventListener('click', () => goTo(current - 1));
+            document.getElementById('btnNext').addEventListener('click', () => goTo(current + 1));
+
+            document.addEventListener('keydown', e => {
+                if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goTo(current + 1); }
+                if (e.key === 'ArrowLeft') { e.preventDefault(); goTo(current - 1); }
+                if (e.key === 'Home') { e.preventDefault(); goTo(0); }
+                if (e.key === 'End') { e.preventDefault(); goTo(TOTAL - 1); }
+            });
+
+            // Touch support
+            let touchX = 0;
+            document.addEventListener('touchstart', e => touchX = e.touches[0].clientX);
+            document.addEventListener('touchend', e => {
+                const dx = e.changedTouches[0].clientX - touchX;
+                if (Math.abs(dx) > 50) dx > 0 ? goTo(current - 1) : goTo(current + 1);
+            });
+
+            // Particles background
+            const canvas = document.getElementById('particles');
+            const ctx = canvas.getContext('2d');
+            let W, H;
+            function resize() { W = canvas.width = innerWidth; H = canvas.height = innerHeight; }
+            resize();
+            window.addEventListener('resize', resize);
+
+            const particles = Array.from({ length: 40 }, () => ({
+                x: Math.random() * innerWidth,
+                y: Math.random() * innerHeight,
+                r: Math.random() * 2 + 0.5,
+                dx: (Math.random() - 0.5) * 0.3,
+                dy: (Math.random() - 0.5) * 0.3,
+                a: Math.random() * 0.15 + 0.03
+            }));
+
+            function draw() {
+                ctx.clearRect(0, 0, W, H);
+                particles.forEach(p => {
+                    p.x += p.dx; p.y += p.dy;
+                    if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+                    if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(52,211,153,${p.a})`;
+                    ctx.fill();
+                });
+                requestAnimationFrame(draw);
+            }
+            draw();
+
+            // Init progress
+            progress.style.width = (1 / TOTAL * 100) + '%';
+        })();
+    </script>
+
+</body>
+
+</html>
