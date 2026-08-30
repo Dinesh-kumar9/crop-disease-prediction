@@ -45,10 +45,17 @@ def _get_model(crop: str):
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
         os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
         os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
+        os.environ["OMP_NUM_THREADS"] = "1"
         import tensorflow as tf
 
+        try:
+            tf.config.threading.set_intra_op_parallelism_threads(1)
+            tf.config.threading.set_inter_op_parallelism_threads(1)
+        except Exception:
+            pass
+
         logger.info("Loading %s model from %s ...", crop.capitalize(), model_path)
-        model = tf.keras.models.load_model(str(model_path))
+        model = tf.keras.models.load_model(str(model_path), compile=False)
         models[crop_key] = model
         logger.info("Successfully loaded %s model.", crop.capitalize())
         return model
@@ -70,6 +77,8 @@ def predict_disease(crop: str, img_array: np.ndarray) -> tuple[str, float]:
         Tuple of (predicted_class_label, confidence_percentage).
         Returns ("Unknown", 0.0) if model is unavailable.
     """
+    import gc
+
     model = _get_model(crop)
     class_labels = _get_class_labels(crop)
 
@@ -80,14 +89,20 @@ def predict_disease(crop: str, img_array: np.ndarray) -> tuple[str, float]:
         return _mock_prediction(class_labels)
 
     try:
-        preds = model.predict(img_array, verbose=0)[0]
+        # Direct lightweight tensor call — avoids heavy Keras Dataset allocation
+        raw_preds = model(img_array, training=False)
+        preds = raw_preds.numpy()[0]
         top_idx = int(np.argmax(preds))
         confidence = round(float(preds[top_idx]) * 100, 2)
         label = class_labels[top_idx]
         logger.info("Prediction for %s: %s (%.2f%%)", crop, label, confidence)
+
+        # Force immediate memory reclamation
+        gc.collect()
         return label, confidence
     except Exception as exc:
         logger.error("Inference error for crop '%s': %s", crop, exc)
+        gc.collect()
         return "Unknown", 0.0
 
 

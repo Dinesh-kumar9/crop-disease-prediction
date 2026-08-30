@@ -18,9 +18,9 @@ services:
     buildCommand: "pip install -r requirements.txt"
 
     # --- Start ---
-    # --workers 1 --threads 4: keeps memory under 512MB while handling concurrent requests
+    # --workers 1 --threads 2: ultra-light memory footprint (<150MB)
     # --timeout 180: generous timeout for ML inference
-    startCommand: "gunicorn wsgi:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 180"
+    startCommand: "gunicorn wsgi:app --bind 0.0.0.0:$PORT --workers 1 --threads 2 --timeout 180"
 
     # --- Environment Variables ---
     envVars:
@@ -38,6 +38,18 @@ services:
 
       - key: TF_CPP_MIN_LOG_LEVEL
         value: "3"
+
+      - key: OMP_NUM_THREADS
+        value: "1"
+
+      - key: TF_NUM_INTRAOP_THREADS
+        value: "1"
+
+      - key: TF_NUM_INTEROP_THREADS
+        value: "1"
+
+      - key: MALLOC_TRIM_THRESHOLD_
+        value: "100000"
 
       - key: OWM_API_KEY
         value: "5f84004690244978a3651a57c90e14f7"
