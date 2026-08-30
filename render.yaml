@@ -18,10 +18,9 @@ services:
     buildCommand: "pip install -r requirements.txt"
 
     # --- Start ---
-    # --preload: loads TF models once before accepting requests
-    # --workers 1: free tier 512MB RAM limit
-    # --timeout 120: allow time for first TF inference
-    startCommand: "gunicorn wsgi:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120 --preload --access-logfile - --error-logfile -"
+    # --workers 1 --threads 4: keeps memory under 512MB while handling concurrent requests
+    # --timeout 180: generous timeout for ML inference
+    startCommand: "gunicorn wsgi:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 180 --access-logfile - --error-logfile -"
 
     # --- Environment Variables ---
     envVars:
