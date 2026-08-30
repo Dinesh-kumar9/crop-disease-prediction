@@ -16,6 +16,48 @@ from flask import current_app
 logger = logging.getLogger(__name__)
 
 
+def _get_model(crop: str):
+    """
+    Get or lazily load the requested ML model from disk into app.extensions['models'].
+    Only loads the specific crop model needed, preserving memory.
+    """
+    models = current_app.extensions.setdefault("models", {})
+    crop_key = crop.lower()
+
+    if crop_key in models:
+        return models[crop_key]
+
+    model_dir: Path = current_app.config["MODEL_DIR"]
+    filename = (
+        current_app.config["TOMATO_MODEL_FILE"]
+        if crop_key == "tomato"
+        else current_app.config["BANANA_MODEL_FILE"]
+    )
+    model_path = model_dir / filename
+
+    if not model_path.exists():
+        logger.warning("Model file not found at %s", model_path)
+        models[crop_key] = None
+        return None
+
+    try:
+        import os
+        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+        os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+        os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
+        import tensorflow as tf
+
+        logger.info("Loading %s model from %s ...", crop.capitalize(), model_path)
+        model = tf.keras.models.load_model(str(model_path))
+        models[crop_key] = model
+        logger.info("Successfully loaded %s model.", crop.capitalize())
+        return model
+    except Exception as exc:
+        logger.error("Failed to load %s model: %s", crop, exc)
+        models[crop_key] = None
+        return None
+
+
 def predict_disease(crop: str, img_array: np.ndarray) -> tuple[str, float]:
     """
     Run disease classification inference for the given crop and image.
@@ -28,9 +70,7 @@ def predict_disease(crop: str, img_array: np.ndarray) -> tuple[str, float]:
         Tuple of (predicted_class_label, confidence_percentage).
         Returns ("Unknown", 0.0) if model is unavailable.
     """
-    models = current_app.extensions.get("models", {})
-    model = models.get(crop.lower())
-
+    model = _get_model(crop)
     class_labels = _get_class_labels(crop)
 
     if model is None:
@@ -72,6 +112,5 @@ def _mock_prediction(class_labels: list) -> tuple[str, float]:
 
 
 def is_model_available(crop: str) -> bool:
-    """Check whether a trained model is loaded for the given crop."""
-    models = current_app.extensions.get("models", {})
-    return models.get(crop.lower()) is not None
+    """Check whether a trained model is loaded or available on disk for the given crop."""
+    return _get_model(crop) is not None

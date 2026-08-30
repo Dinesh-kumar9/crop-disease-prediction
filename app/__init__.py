@@ -49,48 +49,17 @@ def _configure_logging(app: Flask) -> None:
     app.logger.addHandler(stream_handler)
 
 
-def _load_models(app: Flask) -> None:
+def _init_models_cache(app: Flask) -> None:
     """
-    Load ML models once at application startup and store them in app.extensions.
-    This avoids reloading on every request.
+    Initialize the model cache. Models will be loaded lazily on first prediction
+    to ensure ultra-fast boot time and low memory footprint on cloud hosts.
     """
     import os
     os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
     os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 
-    import tensorflow as tf
-
-    model_dir: Path = app.config["MODEL_DIR"]
-    models = {}
-
-    # Load Tomato model
-    tomato_path = model_dir / app.config["TOMATO_MODEL_FILE"]
-    if tomato_path.exists():
-        try:
-            models["tomato"] = tf.keras.models.load_model(str(tomato_path))
-            app.logger.info("Tomato model loaded from %s", tomato_path)
-        except Exception as exc:
-            app.logger.error("Failed to load Tomato model: %s", exc)
-            models["tomato"] = None
-    else:
-        app.logger.warning("Tomato model not found at %s", tomato_path)
-        models["tomato"] = None
-
-    # Load Banana model
-    banana_path = model_dir / app.config["BANANA_MODEL_FILE"]
-    if banana_path.exists():
-        try:
-            models["banana"] = tf.keras.models.load_model(str(banana_path))
-            app.logger.info("Banana model loaded from %s", banana_path)
-        except Exception as exc:
-            app.logger.error("Failed to load Banana model: %s", exc)
-            models["banana"] = None
-    else:
-        app.logger.warning("Banana model not found at %s", banana_path)
-        models["banana"] = None
-
-    app.extensions["models"] = models
+    app.extensions["models"] = {}
 
 
 def create_app(config_name: str = "default") -> Flask:
@@ -120,8 +89,8 @@ def create_app(config_name: str = "default") -> Flask:
     # Configure logging
     _configure_logging(app)
 
-    # Load ML models
-    _load_models(app)
+    # Initialize model cache (lazy loaded on demand)
+    _init_models_cache(app)
 
     # Register blueprints
     from app.routes.main import main_bp
